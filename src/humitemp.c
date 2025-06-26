@@ -56,6 +56,8 @@ static volatile bool adcConversionComplete = false;
 /** This flag indicates that a new measurement shall be done. */
 static volatile bool measurement_flag = true;
 
+static volatile bool redraw = true;
+
 /** Timer used for periodic update of the measurements. */
 sl_sleeptimer_timer_handle_t measurement_timer;
 
@@ -73,6 +75,8 @@ static volatile int32_t offsetInSeconds;
 static volatile uint32_t mode;
 static volatile uint32_t display_cnt;
 static volatile TimeType selectedType;
+static volatile int32_t temp;
+static volatile int32_t rh;
 
 /***************************************************************************//**
  * Local prototypes
@@ -133,7 +137,7 @@ int main(void)
 
   while (true) {
     if (measurement_flag) {
-      measure_humidity_and_temperature(i2cInit.port, &rhData, &tempData, &vBat);
+      measure_humidity_and_temperature(i2cInit.port, &rh, &temp, &vBat);
       measurement_flag = false;
       if (lowBatPrevious) {
         lowBat = (vBat <= LOW_BATTERY_THRESHOLD);
@@ -141,16 +145,21 @@ int main(void)
         lowBat = false;
       }
       lowBatPrevious = (vBat <= LOW_BATTERY_THRESHOLD);
+    }
+
+    if (redraw) {
       if (mode == 0) {
-          GRAPHICS_Draw(tempData, rhData, cnt + offsetInSeconds, lowBat);
+          GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
       } else {
 
-    	  GRAPHICS_Draw(tempData, rhData, display_cnt + offsetInSeconds, lowBat);
+    	  GRAPHICS_Draw(temp, rh, display_cnt + offsetInSeconds, lowBat);
       }
+
+      redraw = false;
     }
+  }
     EMU_EnterEM2(false);
   }
-}
 
 /***************************************************************************//**
  * @brief Setup GPIO interrupt for pushbuttons.
@@ -322,6 +331,7 @@ static void time_callback(sl_sleeptimer_timer_handle_t *handle, void *data)
   (void) data;
   cnt++;
   measurement_flag = true;
+  redraw = true;
 }
 
 /***************************************************************************//**

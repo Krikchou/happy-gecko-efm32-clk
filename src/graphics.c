@@ -29,6 +29,39 @@
 
 static GLIB_Context_t glibContext;          /* Global glib context */
 
+static const uint8_t bitmap_drop[] = {0x00,
+		0x00,
+		0x1F,
+		0xF8,
+		0x1F,
+		0xF8,
+		0x07,
+		0x80,
+		0x07,
+		0x80,
+		0x07,
+		0x80,
+		0x07,
+		0x80,
+		0x07,
+		0x80,
+		0x07,
+		0x80,
+		0x07,
+		0x80,
+		0x1F,
+		0xE0,
+		0x7F,
+		0xF8,
+		0x7F,
+		0xF8,
+		0x7F,
+		0xF8,
+		0x1F,
+		0xE0,
+		0x07,
+		0x80};
+
 static void GRAPHICS_DrawThermometer(int32_t xoffset, int32_t yoffset, uint32_t max, int32_t level, char scale);
 static void GRAPHICS_DrawTemperatureC(int32_t xoffset, int32_t yoffset, int32_t tempData);
 static void GRAPHICS_DrawTemperatureF(int32_t xoffset, int32_t yoffset, int32_t tempData);
@@ -138,6 +171,15 @@ void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t sec, bool lowBat)
 			  t.tm_year);
 
 	  GLIB_drawString(&glibContext, str, 25, 5, 75, 0);
+
+	  GLIB_drawBitmap(&glibContext, 5, 95, 16, 16, bitmap_drop);
+
+	  snprintf(str, 10, "%d%d.%d%d'C",
+			  (tempData / 1000 % 100) / 10,
+			  (tempData / 1000 % 1000) / 100,
+			  (tempData / 1000 % 10000) / 1000,
+			  (tempData / 1000 % 100000) / 10000);
+	  GLIB_drawString(&glibContext, str, 25, 30, 95, 0);
   }
   DMD_updateDisplay();
 }
