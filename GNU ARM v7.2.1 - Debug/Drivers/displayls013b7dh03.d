@@ -1,6 +1,6 @@
 Drivers/displayls013b7dh03.o: \
  C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.7/hardware/kit/common/drivers/displayls013b7dh03.c \
- C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files_inc/em_gpio.h \
+ C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files_inc/em_gpio.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\em_device.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\efm32hg322f64.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\cmsis\include\arm_math.h \
@@ -63,7 +63,7 @@ Drivers/displayls013b7dh03.o: \
  C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.7/hardware/kit/common/drivers/display.h \
  C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.7/hardware/kit/common/drivers/displayls013b7dh03.h
 
-C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files_inc/em_gpio.h:
+C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files_inc/em_gpio.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\em_device.h:
 

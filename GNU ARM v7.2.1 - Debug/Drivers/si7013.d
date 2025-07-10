@@ -48,7 +48,7 @@ Drivers/si7013.o: \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\efm32hg_af_pins.h \
  C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.7/hardware/kit/common/drivers/i2cspm.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\slstk3400a_efm32hg\config\i2cspmconfig.h \
- C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files_inc/em_gpio.h \
+ C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files_inc/em_gpio.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_bus.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_assert.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_i2c.h
@@ -149,7 +149,7 @@ C:/SiliconLabs/SimplicityStudio/v4/developer/sdks/gecko_sdk_suite/v2.7/hardware/
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\slstk3400a_efm32hg\config\i2cspmconfig.h:
 
-C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files_inc/em_gpio.h:
+C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files_inc/em_gpio.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_bus.h:
 

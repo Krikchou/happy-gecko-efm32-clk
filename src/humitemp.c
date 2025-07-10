@@ -29,6 +29,10 @@
 #include "sl_sleeptimer.h"
 #include "bspconfig.h"
 #include "clock_control.h"
+#include "graphics.h"
+#include "si114x_algorithm.h"
+#include <stdint.h>
+#include <limits.h>
 
 
 /***************************************************************************//**
@@ -91,6 +95,10 @@ static void touch_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
 /***************************************************************************//**
  * @brief  Main function
  ******************************************************************************/
+int32_t temp_min_mC = INT32_MAX; // min will always be the biggest 32bit value, so any real measured temp will be lower and replace it
+int32_t temp_max_mC = INT32_MIN; // max will always be the smallest 32bit value, so any real measured temp will be bigger and replace it
+int32_t humidity_min = INT32_MAX;
+int32_t	humidity_max = 0;
 int main(void)
 {
   I2CSPM_Init_TypeDef i2cInit = I2CSPM_INIT_DEFAULT;
@@ -136,8 +144,20 @@ int main(void)
   EMU_EnterEM2(false);
 
   while (true) {
+	  //0 means pressed in Silicon lab devices
+	GPIO_PinModeSet(BSP_GPIO_PB0_PORT, BSP_GPIO_PB0_PIN, gpioModeInputPull, 1);
+	GPIO_PinModeSet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN, gpioModeInputPull, 1);
+	int btn0_state = GPIO_PinInGet(BSP_GPIO_PB0_PORT, BSP_GPIO_PB0_PIN);
+	int btn1_state = GPIO_PinInGet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN);
+	if ((btn0_state == 0) & (btn1_state == 0)) {
+		resetTempHumidity();
+	}
     if (measurement_flag) {
       measure_humidity_and_temperature(i2cInit.port, &rh, &temp, &vBat);
+      if (tempData < temp_min_mC) temp_min_mC = tempData;
+      if (tempData > temp_max_mC) temp_max_mC = tempData;
+	  if (rhData < humidity_min) humidity_min = rhData;
+	  if (rhData > humidity_max) humidity_max = rhData;
       measurement_flag = false;
       if (lowBatPrevious) {
         lowBat = (vBat <= LOW_BATTERY_THRESHOLD);
@@ -145,14 +165,15 @@ int main(void)
         lowBat = false;
       }
       lowBatPrevious = (vBat <= LOW_BATTERY_THRESHOLD);
+      GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
     }
 
     if (redraw) {
       if (mode == 0) {
-          GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
+          GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
       } else {
 
-    	  GRAPHICS_Draw(temp, rh, display_cnt + offsetInSeconds, lowBat);
+    	  GRAPHICS_Draw(temp, rh, display_cnt + offsetInSeconds, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
       }
 
       redraw = false;
@@ -160,6 +181,30 @@ int main(void)
   }
     EMU_EnterEM2(false);
   }
+
+void resetMinMaxTemp(void)
+{
+	temp_min_mC = INT32_MAX;
+	temp_max_mC = INT32_MIN;
+}
+
+void resetMinMacHumidity(void)
+{
+	humidity_min = INT32_MAX;
+	humidity_max = 0;
+}
+
+void resetTempHumidity(void)
+{
+	resetMinMaxTemp();
+	resetMinMacHumidity();
+}
+
+void buttonsInit(void)
+{
+	GPIO_PinModeSet(BSP_GPIO_PB0_PORT, BSP_GPIO_PB0_PIN, gpioModeInputPull, 1);
+	GPIO_PinModeSet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN, gpioModeInputPull, 1);
+}
 
 /***************************************************************************//**
  * @brief Setup GPIO interrupt for pushbuttons.

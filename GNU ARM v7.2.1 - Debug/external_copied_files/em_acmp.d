@@ -45,7 +45,7 @@ external_copied_files/em_acmp.o: ../external_copied_files/em_acmp.c \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\efm32hg_dmactrl.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\efm32hg_af_ports.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\efm32hg_af_pins.h \
- C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files_inc/em_gpio.h \
+ C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files_inc/em_gpio.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_bus.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_assert.h
 
@@ -141,7 +141,7 @@ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\efm32hg_af_pins.h:
 
-C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files_inc/em_gpio.h:
+C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files_inc/em_gpio.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_bus.h:
 

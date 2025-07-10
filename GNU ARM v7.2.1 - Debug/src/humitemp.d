@@ -1,5 +1,5 @@
 src/humitemp.o: ../src/humitemp.c \
- C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files/graphics_c.h \
+ C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files/graphics_c.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_i2c.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\em_device.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\device\siliconlabs\efm32hg\include\efm32hg322f64.h \
@@ -54,12 +54,12 @@ src/humitemp.o: ../src/humitemp.c \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_cmu.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_common.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_emu.h \
- C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files_inc/em_gpio.h \
+ C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files_inc/em_gpio.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_rtc.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_adc.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\drivers\i2cspm.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\slstk3400a_efm32hg\config\i2cspmconfig.h \
- C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files/capsense.h \
+ C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files/capsense.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\slstk3400a_efm32hg\config\capsenseconfig.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\drivers\si7013.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\service\sleeptimer\inc\sl_sleeptimer.h \
@@ -67,9 +67,13 @@ src/humitemp.o: ../src/humitemp.c \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\common\inc\sl_status.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\slstk3400a_efm32hg\config\bspconfig.h \
  c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\bsp\bsp_bcp.h \
- ../src/clock_control.h
+ ../src/clock_control.h \
+ C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\includes/graphics.h \
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\drivers\si114x_algorithm.h \
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\drivers\si114x_functions.h \
+ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\drivers\si114x_types.h
 
-C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files/graphics_c.h:
+C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files/graphics_c.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_i2c.h:
 
@@ -179,7 +183,7 @@ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_emu.h:
 
-C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files_inc/em_gpio.h:
+C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files_inc/em_gpio.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\platform\emlib\inc\em_rtc.h:
 
@@ -189,7 +193,7 @@ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\slstk3400a_efm32hg\config\i2cspmconfig.h:
 
-C:\Users\krama\SimplicityStudio\v4_workspace\SLSTK3400A_humitemp\external_copied_files/capsense.h:
+C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\external_copied_files/capsense.h:
 
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\slstk3400a_efm32hg\config\capsenseconfig.h:
 
@@ -206,3 +210,11 @@ c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\
 c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\bsp\bsp_bcp.h:
 
 ../src/clock_control.h:
+
+C:\Users\adria\Documents\Embedded\siliconlabs\happy-gecko-efm32-clk\includes/graphics.h:
+
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\drivers\si114x_algorithm.h:
+
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\drivers\si114x_functions.h:
+
+c:\siliconlabs\simplicitystudio\v4\developer\sdks\gecko_sdk_suite\v2.7\hardware\kit\common\drivers\si114x_types.h:

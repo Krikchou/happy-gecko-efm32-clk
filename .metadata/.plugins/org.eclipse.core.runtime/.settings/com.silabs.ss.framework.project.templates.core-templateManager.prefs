@@ -1,0 +1,5 @@
+eclipse.preferences.version=1
+knownPackageIds=
+knownParentDescs_com.silabs.ss.platform.sdk.core-protocolRegistry=com.silabs.sdk.stack.super\:2.6.5._310455070.com.silabs.sdk.exx32\:5.8.5.0_-91939798\u0000com.silabs.sdk.stack.super\:2.6.5._310455070.com.silabs.sdk.stack.bootloader\:1.9.2._-202133131\u0000com.silabs.sdk.stack.super\:2.7.13._310455041.com.silabs.sdk.exx32\:5.9.10.0_-60569269\u0000com.silabs.sdk.stack.super\:2.7.13._310455041.com.silabs.sdk.stack.bootloader\:1.10.3._1748125906
+knownParentDescs_com.silabs.ss.platform.sdk.core-sdkManager=com.silabs.sdk.none\:0.0.0\u0000com.silabs.sdk.stack.super\:2.6.5._310455070\u0000com.silabs.sdk.stack.super\:2.7.13._310455041\u0000com.silabs.stack.external.stackless\:1.0.0._1234321
+lastRefreshDate=1751603148123

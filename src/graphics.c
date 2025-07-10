@@ -62,10 +62,10 @@ static const uint8_t bitmap_drop[] = {0x00,
 		0x07,
 		0x80};
 
-static void GRAPHICS_DrawThermometer(int32_t xoffset, int32_t yoffset, uint32_t max, int32_t level, char scale);
-static void GRAPHICS_DrawTemperatureC(int32_t xoffset, int32_t yoffset, int32_t tempData);
-static void GRAPHICS_DrawTemperatureF(int32_t xoffset, int32_t yoffset, int32_t tempData);
-static void GRAPHICS_DrawHumidity(int32_t xoffset, int32_t yoffset, uint32_t rhData);
+static void GRAPHICS_DrawThermometer(int32_t xoffset, int32_t yoffset, int32_t min, int32_t max, int32_t level, char scale);
+static void GRAPHICS_DrawTemperatureC(int32_t xoffset, int32_t yoffset, int32_t tempData, int32_t temp_min_mC, int32_t temp_max_mC);
+static void GRAPHICS_DrawTemperatureF(int32_t xoffset, int32_t yoffset, int32_t tempData, int32_t temp_min_mC, int32_t temp_max_mC);
+static void GRAPHICS_DrawHumidity(int32_t xoffset, int32_t yoffset, int32_t rhData, int32_t humidity_min, int32_t humidity_max);
 static void GRAPHICS_CreateString(char *string, int32_t value);
 
 /***************************************************************************//**
@@ -135,7 +135,14 @@ void GRAPHICS_ShowStatus(bool si7013_status, bool lowBat)
  * @param degF
  *        Set to 0 to display temperature in Celsius, otherwise Fahrenheit.
  ******************************************************************************/
-void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t sec, bool lowBat)
+void GRAPHICS_Draw(int32_t tempData,
+				   int32_t rhData,
+				   bool lowBat,
+				   uint32_t sec,
+				   int32_t temp_min_mC,
+				   int32_t temp_max_mC,
+				   int32_t humidity_min,
+				   int32_t humidity_max)
 {
   GLIB_clear(&glibContext);
 
@@ -143,9 +150,9 @@ void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t sec, bool lowBat)
     GLIB_drawString(&glibContext, "LOW BATTERY!", 12, 5, 120, 0);
   } else {
     /* Draw temperature and RH */
-    //GRAPHICS_DrawTemperatureC(6, 3, tempData);
-    //GRAPHICS_DrawTemperatureF(64 - 17, 3, tempData);
-    //GRAPHICS_DrawHumidity(127 - 40, 3, rhData);
+	  GRAPHICS_DrawTemperatureC(6, 3, tempData, temp_min_mC, temp_max_mC);
+	  GRAPHICS_DrawTemperatureF(64 - 17, 3, tempData, temp_min_mC, temp_max_mC);
+	  GRAPHICS_DrawHumidity(127 - 40, 3, rhData, humidity_min, humidity_max);
 	  char str[50];
 
 
@@ -193,16 +200,22 @@ void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t sec, bool lowBat)
  * @param tempData
  *        Temperature data (given in Celsius) multiplied by 1000
  ******************************************************************************/
-static void GRAPHICS_DrawTemperatureF(int32_t xoffset, int32_t yoffset, int32_t tempData)
+static void GRAPHICS_DrawTemperatureF(int32_t xoffset,
+									  int32_t yoffset,
+									  int32_t tempData,
+									  int32_t temp_min_mC,
+									  int32_t temp_max_mC)
 {
   char string[10];
 
   tempData = ((tempData * 9) / 5) + 32000;
+  temp_min_mC = ((temp_min_mC * 9) / 5) + 32000;
+  temp_max_mC = ((temp_max_mC * 9) / 5) + 32000;
 
   GRAPHICS_CreateString(string, tempData);
   GLIB_drawString(&glibContext, string, strlen(string), xoffset, yoffset, 0);
 
-  GRAPHICS_DrawThermometer(xoffset + 15, yoffset + 17, 95, tempData / 1000, 'F');
+  GRAPHICS_DrawThermometer(xoffset + 15, yoffset + 17, temp_min_mC / 1000, temp_max_mC / 1000, tempData / 1000, 'F');
 }
 
 /***************************************************************************//**
@@ -214,14 +227,18 @@ static void GRAPHICS_DrawTemperatureF(int32_t xoffset, int32_t yoffset, int32_t 
  * @param tempData
  *        Temperature data (given in Celsius) multiplied by 1000
  ******************************************************************************/
-static void GRAPHICS_DrawTemperatureC(int32_t xoffset, int32_t yoffset, int32_t tempData)
+static void GRAPHICS_DrawTemperatureC(int32_t xoffset,
+									  int32_t yoffset,
+									  int32_t tempData,
+									  int32_t temp_min_mC,
+									  int32_t temp_max_mC)
 {
   char string[10];
 
   GRAPHICS_CreateString(string, tempData);
   GLIB_drawString(&glibContext, string, strlen(string), xoffset, yoffset, 0);
 
-  GRAPHICS_DrawThermometer(xoffset + 15, yoffset + 17, 35, tempData / 1000, 'C');
+  GRAPHICS_DrawThermometer(xoffset + 15, yoffset + 17, temp_min_mC / 1000, temp_max_mC / 1000, tempData / 1000, 'C');
 }
 
 /***************************************************************************//**
@@ -233,7 +250,8 @@ static void GRAPHICS_DrawTemperatureC(int32_t xoffset, int32_t yoffset, int32_t 
  ******************************************************************************/
 static void GRAPHICS_DrawThermometer(int32_t xoffset,
                                      int32_t yoffset,
-                                     uint32_t max,
+									 int32_t min,
+									 int32_t max,
                                      int32_t level,
                                      char scale)
 {
@@ -242,7 +260,7 @@ static void GRAPHICS_DrawThermometer(int32_t xoffset,
   const uint32_t minLevelY = yoffset + 76;
   const uint32_t maxLevelY = yoffset + 3;
   uint32_t curLevelY;
-  bool levelNeg;
+  //bool levelNeg;
   char string[10];
 
   /* Draw outer frame */
@@ -257,11 +275,16 @@ static void GRAPHICS_DrawThermometer(int32_t xoffset,
   glibContext.foregroundColor = Black;
 
   /* Draw the "mercury" */
-  levelNeg = (level < 0);
+  //levelNeg = (level < 0);
   /* Abs value and saturate at max */
-  level = levelNeg ? level * -1 : level;
-  level = level > (int32_t)max ? (int32_t)max : level;
-  curLevelY = yoffset + (((minLevelY - maxLevelY) * (max - level)) / max);
+  //level = levelNeg ? level * -1 : level;
+  //level = level > (int32_t)max ? (int32_t)max : level;
+  //curLevelY = yoffset + (((minLevelY - maxLevelY) * (max - level)) / max);
+
+  if (level < min) level = min;
+  if (level > max) level = max;
+  float valueRatio = (float)(level - min) / (float)(max - min);
+  curLevelY = minLevelY - valueRatio * (minLevelY - maxLevelY);
 
   /* Moving part */
   mercuryLevel.xMin = xoffset - 2;
@@ -287,15 +310,21 @@ static void GRAPHICS_DrawThermometer(int32_t xoffset,
   GLIB_drawLineH(&glibContext, xoffset - 6, minLevelY, xoffset + 6);
   GLIB_drawLineH(&glibContext, xoffset - 6, maxLevelY, xoffset + 6);
 
-  GLIB_drawString(&glibContext, "0", 1, xoffset + 8, minLevelY - 4, 0);
-  snprintf(string, 4, "%ld", max);
-  GLIB_drawString(&glibContext, string, 4, xoffset + 8, maxLevelY - 4, 0);
+  //GLIB_drawString(&glibContext, "0", 1, xoffset + 8, minLevelY - 4, 0);
+  //snprintf(string, 4, "%ld", max);
+  //GLIB_drawString(&glibContext, string, 4, xoffset + 8, maxLevelY - 4, 0);
+  snprintf(string, sizeof(string), "%ld", min);
+  GLIB_drawString(&glibContext, string, strlen(string), xoffset + 8, minLevelY - 4, 0);
 
-  if (levelNeg) {
-    GLIB_drawString(&glibContext, "-", 1, xoffset - 2, yoffset + 87, 0);
-  } else {
-    GLIB_drawString(&glibContext, (char *)&scale, 1, xoffset - 2, yoffset + 87, 0);
-  }
+  snprintf(string, sizeof(string), "%ld", max);
+  GLIB_drawString(&glibContext, string, strlen(string), xoffset + 8, maxLevelY - 4, 0);
+  GLIB_drawString(&glibContext, (char *)&scale, 1, xoffset - 2, yoffset + 87, 0);
+  //Commented, because no need to check if the value is negative
+  //if (levelNeg) {
+  //  GLIB_drawString(&glibContext, "-", 1, xoffset - 2, yoffset + 87, 0);
+  //} else {
+  //  GLIB_drawString(&glibContext, (char *)&scale, 1, xoffset - 2, yoffset + 87, 0);
+  //}
 }
 
 /***************************************************************************//**
@@ -305,14 +334,18 @@ static void GRAPHICS_DrawThermometer(int32_t xoffset,
  * @param rhData
  *        Relative humidity (in percent), multiplied by 1000.
  ******************************************************************************/
-static void GRAPHICS_DrawHumidity(int32_t xoffset, int32_t yoffset, uint32_t rhData)
+static void GRAPHICS_DrawHumidity(int32_t xoffset,
+								  int32_t yoffset,
+								  int32_t rhData,
+								  int32_t humidity_min,
+								  int32_t humidity_max)
 {
   char string[10];
 
   GRAPHICS_CreateString(string, rhData);
   GLIB_drawString(&glibContext, string, strlen(string), xoffset, yoffset, 0);
 
-  GRAPHICS_DrawThermometer(xoffset + 15, yoffset + 17, 100, rhData / 1000, '%');
+  GRAPHICS_DrawThermometer(xoffset + 15, yoffset + 17, humidity_min / 1000, humidity_max / 1000, rhData / 1000, '%');
 }
 
 /***************************************************************************//**
