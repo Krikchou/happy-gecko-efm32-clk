@@ -16,6 +16,7 @@
  ******************************************************************************/
 
 #include <graphics_c.h>
+#include <stdbool.h>
 #include "em_device.h"
 #include "em_chip.h"
 #include "em_cmu.h"
@@ -29,6 +30,9 @@
 #include "sl_sleeptimer.h"
 #include "bspconfig.h"
 #include "clock_control.h"
+#include "graphics.h"
+#include "dmd.h"
+#include "glib.h"
 
 
 /***************************************************************************//**
@@ -56,7 +60,6 @@ static volatile bool adcConversionComplete = false;
 /** This flag indicates that a new measurement shall be done. */
 static volatile bool measurement_flag = true;
 
-static volatile bool redraw = true;
 
 /** Timer used for periodic update of the measurements. */
 sl_sleeptimer_timer_handle_t measurement_timer;
@@ -88,6 +91,35 @@ static void measure_humidity_and_temperature(I2C_TypeDef *i2c, uint32_t *rhData,
 static void measurement_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
 static void time_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
 static void touch_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
+void clear_display(void);
+void GRAPHICS_Draw(int32_t temp, uint32_t rh, uint32_t time, bool lowBat);
+void GRAPHICS_Draw_Weather_Station(int32_t tempData, uint32_t rhData, bool lowBat, int32_t temp_min_mC, int32_t temp_max_mC, uint32_t humidity_min, uint32_t humidity_max);
+void resetTempHumidity(void);
+int32_t temp_min_mC = INT32_MAX; // min will always be the biggest 32bit value, so any real measured temp will be lower and replace it
+int32_t temp_max_mC = INT32_MIN; // max will always be the smallest 32bit value, so any real measured temp will be bigger and replace it
+int32_t humidity_min = INT32_MAX;
+int32_t	humidity_max = 0;
+GLIB_Context_t   glibContext;
+
+static volatile bool is_w_station = false; // Promenliva za rejim na rabota meterologichna stancia
+static volatile bool redraw = false;
+
+void clear_display(void)
+{
+  EMSTATUS status;
+
+  // Clear the entire framebuffer in memory.
+  // This function uses the background color set in the glibContext.
+  status = GLIB_clear(&glibContext);
+  if (status != GLIB_OK) {
+    // Handle error if needed
+    return;
+  }
+
+  // Update the physical display with the content of the cleared framebuffer.
+  DMD_updateDisplay();
+}
+
 /***************************************************************************//**
  * @brief  Main function
  ******************************************************************************/
@@ -100,7 +132,6 @@ int main(void)
   uint32_t         vBat = 3300;
   bool             lowBatPrevious = true;
   bool             lowBat = false;
-
   /* Chip errata */
   CHIP_Init();
 
@@ -134,33 +165,91 @@ int main(void)
   sl_sleeptimer_start_periodic_timer_ms(&clk_timer, INTSEC, time_callback, NULL, 0, 0);
 
   EMU_EnterEM2(false);
+  // Buttons PB0 and PB1
+  GPIO_PinModeSet(BSP_GPIO_PB0_PORT, BSP_GPIO_PB0_PIN, gpioModeInputPull, 1);
+  GPIO_PinModeSet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN, gpioModeInputPull, 1);
 
   while (true) {
+    // Status of PB0 and PB1
+    int btn0_state = GPIO_PinInGet(BSP_GPIO_PB0_PORT, BSP_GPIO_PB0_PIN);
+    int btn1_state = GPIO_PinInGet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN);
+
+    // Determine mode of operation
+    if ((btn0_state == 0) && (btn1_state == 1)){
+    	is_w_station = !is_w_station;
+    	//redraw = true;
+//    	clear_display();
+    } else {
+    	redraw = true;
+    }
     if (measurement_flag) {
-      measure_humidity_and_temperature(i2cInit.port, &rh, &temp, &vBat);
-      measurement_flag = false;
-      if (lowBatPrevious) {
-        lowBat = (vBat <= LOW_BATTERY_THRESHOLD);
-      } else {
-        lowBat = false;
-      }
-      lowBatPrevious = (vBat <= LOW_BATTERY_THRESHOLD);
+		measure_humidity_and_temperature(i2cInit.port, &rhData, &tempData, &vBat);
+		if (tempData < temp_min_mC) temp_min_mC = tempData;
+		if (tempData > temp_max_mC) temp_max_mC = tempData;
+		if (rhData < humidity_min) humidity_min = rhData;
+		if (rhData > humidity_max) humidity_max = rhData;
+//		measurement_flag = false;
+		if (lowBatPrevious) {
+		  lowBat = (vBat <= LOW_BATTERY_THRESHOLD);
+		} else {
+		  lowBat = false;
+		}
+		lowBatPrevious = (vBat <= LOW_BATTERY_THRESHOLD);
+		//GRAPHICS_Draw_Weather_Station(tempData, rhData, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
+	}
+    if (is_w_station){
+    	if ((btn0_state == 0) && (btn1_state == 0)) {
+    		resetTempHumidity();
+	    }
+    	else {
+    		clear_display();
+    		GRAPHICS_Draw_Weather_Station(tempData, rhData, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
+    	}
+    } else {
+		  if (mode == 0) {
+			  clear_display();
+			  GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
+		  } else {
+			  clear_display();
+			  GRAPHICS_Draw(temp, rh, display_cnt + offsetInSeconds, lowBat);
+		  }
+
+		  redraw = false;
+	}
+
+//    if (measurement_flag) {
+//      measure_humidity_and_temperature(i2cInit.port, &rh, &temp, &vBat);
+//      measurement_flag = false;
+//      if (lowBatPrevious) {
+//        lowBat = (vBat <= LOW_BATTERY_THRESHOLD);
+//      } else {
+//        lowBat = false;
+//      }
+//      lowBatPrevious = (vBat <= LOW_BATTERY_THRESHOLD);
+//    }
+
     }
-
-    if (redraw) {
-      if (mode == 0) {
-          GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
-      } else {
-
-    	  GRAPHICS_Draw(temp, rh, display_cnt + offsetInSeconds, lowBat);
-      }
-
-      redraw = false;
-    }
-  }
     EMU_EnterEM2(false);
-  }
+}
 
+
+void resetMinMaxTemp(void)
+{
+	temp_min_mC = INT32_MAX;
+	temp_max_mC = INT32_MIN;
+}
+
+void resetMinMacHumidity(void)
+{
+	humidity_min = INT32_MAX;
+	humidity_max = 0;
+}
+
+void resetTempHumidity(void)
+{
+	resetMinMaxTemp();
+	resetMinMacHumidity();
+}
 /***************************************************************************//**
  * @brief Setup GPIO interrupt for pushbuttons.
  *****************************************************************************/
