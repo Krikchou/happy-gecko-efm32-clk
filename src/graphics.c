@@ -67,6 +67,13 @@ static void GRAPHICS_DrawTemperatureC(int32_t xoffset, int32_t yoffset, int32_t 
 static void GRAPHICS_DrawTemperatureF(int32_t xoffset, int32_t yoffset, int32_t tempData);
 static void GRAPHICS_DrawHumidity(int32_t xoffset, int32_t yoffset, uint32_t rhData);
 static void GRAPHICS_CreateString(char *string, int32_t value);
+static void GRAPHICS_DrawThermometer_Weather_Station(int32_t xoffset, int32_t yoffset, int32_t min, int32_t max, int32_t level, char scale);
+static void GRAPHICS_DrawTemperatureC_Weather_Station(int32_t xoffset, int32_t yoffset, int32_t tempData, int32_t temp_min_mC, int32_t temp_max_mC);
+static void GRAPHICS_DrawTemperatureF_Weather_Station(int32_t xoffset, int32_t yoffset, int32_t tempData, int32_t temp_min_mC, int32_t temp_max_mC);
+static void GRAPHICS_DrawHumidity_Weather_Station(int32_t xoffset, int32_t yoffset, int32_t rhData, int32_t humidity_min, int32_t humidity_max);
+static void GRAPHICS_DrawThermometerFrame(int32_t xoffset, int32_t yoffset);
+void GLIB_drawStringCentered(GLIB_Context_t *pContext, const char *s, unsigned int len, int xCenter, int y, bool opaque);
+
 
 /***************************************************************************//**
  * @brief Initializes the graphics stack.
@@ -340,4 +347,261 @@ static void GRAPHICS_CreateString(char *string, int32_t value)
   if (string[1] == '0') {
     string[1] = ' ';
   }
+}
+
+static void GRAPHICS_DrawThermometerFrame(int32_t xoffset, int32_t yoffset)
+{
+  GLIB_Rectangle_t thermoScale;
+
+  glibContext.backgroundColor = Black;
+  glibContext.foregroundColor = White;
+
+  /* Draw outer frame */
+  thermoScale.xMin = xoffset - 4;
+  thermoScale.xMax = xoffset + 4;
+  thermoScale.yMin = yoffset;
+  thermoScale.yMax = yoffset + 90;
+  GLIB_drawCircleFilled(&glibContext, xoffset, yoffset + 90, 12);
+  GLIB_drawRectFilled(&glibContext, &thermoScale);
+
+  /* Draw the empty glass part inside */
+  glibContext.backgroundColor = White;
+  glibContext.foregroundColor = Black;
+  GLIB_drawCircleFilled(&glibContext, xoffset, yoffset + 90, 9); // Inner bulb
+  thermoScale.xMin = xoffset - 2;
+  thermoScale.xMax = xoffset + 2;
+  thermoScale.yMin = yoffset + 3;
+  thermoScale.yMax = yoffset + 90;
+  GLIB_drawRectFilled(&glibContext, &thermoScale); // Inner tube
+
+  /* Reset colors for drawing on top */
+  glibContext.backgroundColor = Black;
+  glibContext.foregroundColor = White;
+}
+
+
+/**
+ * @brief Draws a string horizontally centered around a given x-coordinate.
+ *
+ * @param pContext
+ *   Pointer to the graphics context.
+ * @param s
+ *   The string to draw.
+ * @param len
+ *   The length of the string.
+ * @param xCenter
+ *   The horizontal CENTER coordinate for the text.
+ * @param y
+ *   The vertical (top) coordinate for the text.
+ * @param opaque
+ *   Set to true to draw the background color, false for transparent text.
+ */
+void GLIB_drawStringCentered(GLIB_Context_t *pContext,
+                             const char *s,
+                             unsigned int len,
+                             int xCenter,
+                             int y,
+                             bool opaque)
+{
+  // The default font used by the GLIB library is a fixed-width 6x8 pixel font.
+  #define FONT_WIDTH 6
+
+  // 1. Calculate the total pixel width of the string.
+  int32_t textWidth = len * FONT_WIDTH;
+
+  // 2. Calculate the starting x-coordinate to make the text centered.
+  //    The formula is: centerPoint - (totalWidth / 2)
+  int32_t xStart = xCenter - (textWidth / 2);
+
+  // 3. Call the standard library function with the calculated starting coordinate.
+  GLIB_drawString(pContext, s, len, xStart, y, opaque);
+}
+
+
+void GRAPHICS_Draw_Weather_Station(int32_t tempData,
+                                   int32_t rhData,
+                                   bool lowBat,
+                                   int32_t temp_min_mC,
+                                   int32_t temp_max_mC,
+                                   int32_t humidity_min,
+                                   int32_t humidity_max)
+{
+  GLIB_clear(&glibContext);
+
+  if (lowBat) {
+    GLIB_drawString(&glibContext, "LOW BATTERY!", 12, 5, 120, 0);
+  } else {
+    /* Draw temperature and RH */
+    GRAPHICS_DrawTemperatureC_Weather_Station(6, 3, tempData, temp_min_mC, temp_max_mC);
+    GRAPHICS_DrawTemperatureF_Weather_Station(64 - 17, 3, tempData, temp_min_mC, temp_max_mC);
+    GRAPHICS_DrawHumidity_Weather_Station(127 - 40, 3, rhData, humidity_min, humidity_max);
+  }
+  DMD_updateDisplay();
+}
+
+
+/***************************************************************************//**
+ * @brief Helper function for drawing the temperature in Celsius.
+ * @param xoffset
+ *        This parameter selects which part of the UI to show.
+ * @param yoffset
+ *        This parameter selects which part of the UI to show.
+ * @param tempData
+ *        Temperature data (given in Celsius) multiplied by 1000
+ * @param temp_min_mC
+ * 	      Min measured temperature from the sensor.
+ * @param temp_max_mC
+ * 		  Max measured temperature from the sensor.
+ ******************************************************************************/
+static void GRAPHICS_DrawTemperatureC_Weather_Station(int32_t xoffset,
+									  int32_t yoffset,
+									  int32_t tempData,
+									  int32_t temp_min_mC,
+									  int32_t temp_max_mC)
+{
+  char string[10];
+
+  GRAPHICS_CreateString(string, tempData);
+  GLIB_drawString(&glibContext, string, strlen(string), xoffset, yoffset, 0);
+
+  GRAPHICS_DrawThermometer_Weather_Station(xoffset + 15, yoffset + 17, temp_min_mC / 1000, temp_max_mC / 1000, tempData / 1000, 'C');
+}
+
+/***************************************************************************//**
+ * @brief Helper function for drawing the temperature in Fahrenheit
+ * @param xoffset
+ *        This parameter selects which part of the UI to show.
+ * @param yoffset
+ *        This parameter selects which part of the UI to show.
+ * @param tempData
+ *        Temperature data (given in Celsius) multiplied by 1000
+ * @param temp_min_mC
+ * 	      Min measured temperature from the sensor.
+ * @param temp_max_mC
+ * 		  Max measured temperature from the sensor.
+ ******************************************************************************/
+static void GRAPHICS_DrawTemperatureF_Weather_Station(int32_t xoffset,
+									  int32_t yoffset,
+									  int32_t tempData,
+									  int32_t temp_min_mC,
+									  int32_t temp_max_mC)
+{
+  char string[10];
+
+  tempData = ((tempData * 9) / 5) + 32000;
+  temp_min_mC = ((temp_min_mC * 9) / 5) + 32000;
+  temp_max_mC = ((temp_max_mC * 9) / 5) + 32000;
+
+  GRAPHICS_CreateString(string, tempData);
+  GLIB_drawString(&glibContext, string, strlen(string), xoffset, yoffset, 0);
+
+  GRAPHICS_DrawThermometer_Weather_Station(xoffset + 15, yoffset + 17, temp_min_mC / 1000, temp_max_mC / 1000, tempData / 1000, 'F');
+}
+
+/***************************************************************************//**
+ * @brief Helper function for drawing the humidity part of the UI.
+ * @param xoffset
+ *        This parameter selects which part of the UI to show.
+ * @param rhData
+ *        Relative humidity (in percent), multiplied by 1000.
+ * @param humidity_min
+ * 		  Minimum humidity
+ * @param humidity_max
+ * 		  Maximum humidity
+ ******************************************************************************/
+static void GRAPHICS_DrawHumidity_Weather_Station(int32_t xoffset,
+								  int32_t yoffset,
+								  int32_t rhData,
+								  int32_t humidity_min,
+								  int32_t humidity_max)
+{
+  char string[10];
+
+  GRAPHICS_CreateString(string, rhData);
+  GLIB_drawString(&glibContext, string, strlen(string), xoffset, yoffset, 0);
+
+  GRAPHICS_DrawThermometer_Weather_Station(xoffset + 15, yoffset + 17, humidity_min / 1000, humidity_max / 1000, rhData / 1000, '%');
+}
+
+
+/**
+ * @brief Draws the dynamic level and scale character for a thermometer graphic.
+ * @note  This version ONLY draws the mercury level and the symbol in the bulb.
+ *        It assumes the frame has already been drawn.
+ */
+static void GRAPHICS_DrawThermometer_Weather_Station(int32_t xoffset,
+                                     int32_t yoffset,
+                                     int32_t min,
+                                     int32_t max,
+                                     int32_t level,
+                                     char scale)
+{
+  GLIB_Rectangle_t thermoScale;
+  GLIB_Rectangle_t mercuryLevel;
+  const uint32_t minLevelY = yoffset + 76;
+  const uint32_t maxLevelY = yoffset + 3;
+  uint32_t curLevelY;
+  char string[10];
+
+  /* Draw outer frame of the thermometer */
+  glibContext.backgroundColor = Black;
+  glibContext.foregroundColor = White;
+  thermoScale.xMin = xoffset - 4;
+  thermoScale.xMax = xoffset + 4;
+  thermoScale.yMin = yoffset;
+  thermoScale.yMax = yoffset + 90;
+  GLIB_drawCircleFilled(&glibContext, xoffset, yoffset + 90, 12);
+  GLIB_drawRectFilled(&glibContext, &thermoScale);
+
+  /* Draw the inner "glass" part of the thermometer */
+  glibContext.backgroundColor = White;
+  glibContext.foregroundColor = Black;
+
+  /* Glass bulb */
+  GLIB_drawCircleFilled(&glibContext, xoffset, yoffset + 90, 9);
+  /* Glass tube */
+  mercuryLevel.xMin = xoffset - 2;
+  mercuryLevel.xMax = xoffset + 2;
+  mercuryLevel.yMin = yoffset + 3;
+  mercuryLevel.yMax = yoffset + 90;
+  GLIB_drawRectFilled(&glibContext, &mercuryLevel);
+
+  /* Calculate and draw the "mercury" level */
+  if (level < min) level = min;
+  if (level > max) level = max;
+  float valueRatio = 0.0f;
+  if ((max - min) != 0) { // Prevent division by zero
+    valueRatio = (float)(level - min) / (float)(max - min);
+  }
+  curLevelY = minLevelY - (uint32_t)(valueRatio * (float)(minLevelY - maxLevelY));
+
+  mercuryLevel.xMin = xoffset - 2;
+  mercuryLevel.xMax = xoffset + 2;
+  mercuryLevel.yMin = curLevelY;
+  mercuryLevel.yMax = minLevelY + 5; // Overlap slightly into the bulb
+  GLIB_drawRectFilled(&glibContext, &mercuryLevel);
+
+  /* --- FONT SIZE CHANGE FOR THERMOMETER TEXT --- */
+  glibContext.backgroundColor = Black;
+  glibContext.foregroundColor = White;
+
+  /* Draw min/max lines */
+  GLIB_drawLineH(&glibContext, xoffset - 6, minLevelY, xoffset + 6);
+  GLIB_drawLineH(&glibContext, xoffset - 6, maxLevelY, xoffset + 6);
+
+  // 1. SET THE FONT to the smaller one.
+  GLIB_setFont(&glibContext, &GLIB_FontNarrow6x8);
+
+  // 2. DRAW ALL THE TEXT using the new, smaller font.
+  snprintf(string, sizeof(string), "%ld", min);
+  GLIB_drawString(&glibContext, string, strlen(string), xoffset + 8, minLevelY - 4, 0);
+
+  snprintf(string, sizeof(string), "%ld", max);
+  GLIB_drawString(&glibContext, string, strlen(string), xoffset + 8, maxLevelY - 4, 0);
+
+  // Center the scale character in the bulb (assuming 6-pixel wide narrow font)
+  GLIB_drawString(&glibContext, (char *)&scale, 1, xoffset - 3, yoffset + 87, 0);
+
+  // 3. IMPORTANT: SET THE FONT BACK to the default for the rest of the application.
+  GLIB_setFont(&glibContext, &GLIB_FontNormal8x8);
 }
