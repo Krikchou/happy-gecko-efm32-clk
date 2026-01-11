@@ -47,6 +47,15 @@
 #define STANDBY_MODE 0
 #define CALIBRATE_MODE 1
 
+typedef enum Page {
+	CLOCK, //0
+	WEATHER, //1
+	TIME_ADJUST, //2
+	WEATHER_ADJUST, //3
+	MENU, //4
+	EXIT //-1
+} Page;
+
 /***************************************************************************//**
  * Local variables
  ******************************************************************************/
@@ -80,6 +89,20 @@ static volatile uint32_t display_cnt;
 static volatile TimeType selectedType;
 static volatile int32_t temp;
 static volatile int32_t rh;
+static volatile int32_t page_state = 0;
+static volatile int32_t prev_page_state = 0;
+static volatile int32_t menu_selected = 0;
+static volatile int btn0_state = 0;
+static volatile int btn1_state = 0;
+// 0 - hour
+// 1 - minute
+// 2 - second
+// 3 - day
+// 4 - month
+// 5 - year
+// 6 - exit%apply
+static volatile int32_t date_adjust_state = 0;
+static volatile uint32_t stopped_at_time;
 
 /***************************************************************************//**
  * Local prototypes
@@ -90,7 +113,7 @@ static void adcInit(void);
 static void measure_humidity_and_temperature(I2C_TypeDef *i2c, uint32_t *rhData, int32_t *tData, uint32_t *vBat);
 static void measurement_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
 static void time_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
-static void touch_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
+//static void touch_callback(sl_sleeptimer_timer_handle_t *handle, void *data);
 void clear_display(void);
 void GRAPHICS_Draw(int32_t temp, uint32_t rh, uint32_t time, bool lowBat);
 void GRAPHICS_Draw_Weather_Station(int32_t tempData, uint32_t rhData, bool lowBat, int32_t temp_min_mC, int32_t temp_max_mC, uint32_t humidity_min, uint32_t humidity_max);
@@ -159,7 +182,7 @@ int main(void)
   /* Set up periodic measurement timer */
   sl_sleeptimer_start_periodic_timer_ms(&measurement_timer, MEASUREMENT_INTERVAL_MS, measurement_callback, NULL, 0, 0);
 
-  sl_sleeptimer_start_periodic_timer_ms(&sense_timer, 100, touch_callback, NULL, 0, 0);
+  //sl_sleeptimer_start_periodic_timer_ms(&sense_timer, 100, touch_callback, NULL, 0, 0);
 
 
   sl_sleeptimer_start_periodic_timer_ms(&clk_timer, INTSEC, time_callback, NULL, 0, 0);
@@ -171,17 +194,61 @@ int main(void)
 
   while (true) {
     // Status of PB0 and PB1
-    int btn0_state = GPIO_PinInGet(BSP_GPIO_PB0_PORT, BSP_GPIO_PB0_PIN);
-    int btn1_state = GPIO_PinInGet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN);
+    btn0_state = GPIO_PinInGet(BSP_GPIO_PB0_PORT, BSP_GPIO_PB0_PIN);
+    btn1_state = GPIO_PinInGet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN);
 
     // Determine mode of operation
     if ((btn0_state == 0) && (btn1_state == 1)){
-    	is_w_station = !is_w_station;
-    	//redraw = true;
-//    	clear_display();
-    } else {
-    	redraw = true;
+    	if (page_state == 4) {
+    		if (menu_selected == 3) {
+    			menu_selected = -1;
+    		} else {
+    			menu_selected = menu_selected + 1;
+    		}
+    	}
     }
+
+    if ((btn0_state == 1) && (btn1_state == 0)) {
+    	   if (page_state == 4) {
+    		  if (menu_selected == -1) {
+    			page_state = prev_page_state;
+    			menu_selected = prev_page_state;
+    			prev_page_state = 4;
+    		  } else {
+    			prev_page_state = 4;
+    		    page_state = menu_selected;
+    		    if (page_state == 2) {
+    		    	stopped_at_time = cnt;
+    		    }
+    		  }
+    	   } else {
+    		   if (page_state == 0 || page_state == 1) {
+    	          prev_page_state = page_state;
+    	          menu_selected = page_state;
+    	          page_state = 4;
+    		   } else {
+    			   if (page_state == 2) {
+    				   if (date_adjust_state != 5 && date_adjust_state != 6) {
+                              offsetInSeconds = adjustOffset(stopped_at_time, date_adjust_state, INCR);
+    				   } else {
+    					   if (date_adjust_state == 5) {
+    						   offsetInSeconds = adjustOffset(stopped_at_time, YEAR, DECR);
+    					   } else {
+    						   if (date_adjust_state == 6) {
+    							   cnt = stopped_at_time;
+    							   page_state = 4;
+    						   }
+    					   }
+    				   }
+    			   }
+    		   }
+    	  }
+       }
+
+       if (((btn0_state == 1) && (btn1_state == 1)) || ((btn0_state == 0) && (btn1_state == 0))) {
+    	   redraw = true;
+       }
+
     if (measurement_flag) {
 		measure_humidity_and_temperature(i2cInit.port, &rhData, &tempData, &vBat);
 		if (tempData < temp_min_mC) temp_min_mC = tempData;
@@ -197,25 +264,42 @@ int main(void)
 		lowBatPrevious = (vBat <= LOW_BATTERY_THRESHOLD);
 		//GRAPHICS_Draw_Weather_Station(tempData, rhData, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
 	}
-    if (is_w_station){
-    	if ((btn0_state == 0) && (btn1_state == 0)) {
-    		resetTempHumidity();
-	    }
-    	else {
-    		clear_display();
-    		GRAPHICS_Draw_Weather_Station(tempData, rhData, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
-    	}
-    } else {
-		  if (mode == 0) {
-			  clear_display();
-			  GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
-		  } else {
-			  clear_display();
-			  GRAPHICS_Draw(temp, rh, display_cnt + offsetInSeconds, lowBat);
-		  }
+       if (page_state == 0){
+    		  if (mode == 0) {
+    			  clear_display();
+    			  GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
+    		  } else {
+    			  clear_display();
+    			  GRAPHICS_Draw(temp, rh, display_cnt + offsetInSeconds, lowBat);
+    		  }
 
-		  redraw = false;
-	}
+    		  redraw = false;
+    	} else {
+    		if (page_state == 1) {
+        	//if ((btn0_state == 0) && (btn1_state == 0)) {
+
+    	    //} else {
+        		clear_display();
+        		GRAPHICS_Draw_Weather_Station(tempData, rhData, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
+        	//}
+        	    redraw = false;
+           } else {
+        	 if (page_state == 2) {
+
+        	 } else {
+        	   if (page_state == 3) {
+        		 clear_display();
+        		 //GRAPHICS_DrawTempAdj();
+        	   } else {
+        	     if (page_state == 4) {
+    	           clear_display();
+    	           GRAPHICS_DrawMenu(menu_selected, lowBat);
+    	           redraw = false;
+                 }
+        	   }
+        	 }
+           }
+    	}
 
 //    if (measurement_flag) {
 //      measure_humidity_and_temperature(i2cInit.port, &rh, &temp, &vBat);
@@ -342,25 +426,26 @@ void GPIO_ODD_IRQHandler(void) {
 	  /* Act on interrupts */
 	  if (interruptMask & (1 << BSP_GPIO_PB0_PIN)) {
 		  GPIO_IntClear(interruptMask);
-	     if (mode == 0) {
-	    	 display_cnt = cnt;
-	    	 selectedType = HOUR;
-	    	 mode = 1;
-	     } else {
-	    	 cnt = display_cnt;
-	    	 mode = 0;
-	     }
+//	     if (mode == 0) {
+//	    	 display_cnt = cnt;
+//	    	 selectedType = HOUR;
+//	    	 mode = 1;
+//	     } else {
+//	    	 cnt = display_cnt;
+//	    	 mode = 0;
+//	     }
 	  }
 
 	  if (interruptMask & (1 << BSP_GPIO_PB1_PIN)) {
 		  GPIO_IntClear(interruptMask);
-	     if (mode == 1) {
-	    	 if (selectedType == YEAR) {
-	    		 selectedType = HOUR;
-	    	 } else {
-	    		 selectedType ++;
-	    	 }
-	     }
+
+//	     if (mode == 1) {
+//	    	 if (selectedType == YEAR) {
+//	    		 selectedType = HOUR;
+//	    	 } else {
+//	    		 selectedType ++;
+//	    	 }
+//	     }
 	  }
 }
 
@@ -373,25 +458,25 @@ void GPIO_EVEN_IRQHandler(void)
   /* Act on interrupts */
   if (interruptMask & (1 << BSP_GPIO_PB0_PIN)) {
 	  GPIO_IntClear(interruptMask);
-     if (mode == 0) {
-    	 display_cnt = cnt;
-    	 selectedType = HOUR;
-    	 mode = 1;
-     } else {
-    	 cnt = display_cnt;
-    	 mode = 0;
-     }
+//     if (mode == 0) {
+//    	 display_cnt = cnt;
+//    	 selectedType = HOUR;
+//    	 mode = 1;
+//     } else {
+//    	 cnt = display_cnt;
+//    	 mode = 0;
+//     }
   }
 
   if (interruptMask & (1 << BSP_GPIO_PB1_PIN)) {
 	  GPIO_IntClear(interruptMask);
-     if (mode == 1) {
-    	 if (selectedType == YEAR) {
-    		 selectedType = HOUR;
-    	 } else {
-    		 selectedType ++;
-    	 }
-     }
+//     if (mode == 1) {
+//    	 if (selectedType == YEAR) {
+//    		 selectedType = HOUR;
+//    	 } else {
+//    		 selectedType ++;
+//    	 }
+//     }
   }
 }
 
@@ -433,20 +518,20 @@ static void display_callback(sl_sleeptimer_timer_handle_t *handle, void *data)
   mem_lcd_callback_func(mem_lcd_callback_arg);
 }
 
-static void touch_callback(sl_sleeptimer_timer_handle_t *handle, void *data) {
-	if (mode != 0) {
-	CAPSENSE_Sense();
-	    	      if ( CAPSENSE_getPressed(BUTTON1_CHANNEL)
-	    	           && !CAPSENSE_getPressed(BUTTON0_CHANNEL)) {
-	    	    	  offsetInSeconds += adjustOffset(display_cnt + offsetInSeconds, selectedType, INCR);
-	    	          //+
-	    	      } else if ( CAPSENSE_getPressed(BUTTON0_CHANNEL)
-	    	                  && !CAPSENSE_getPressed(BUTTON1_CHANNEL)) {
-	    	    	  offsetInSeconds += adjustOffset(display_cnt + offsetInSeconds, selectedType, DECR);
-	    	    	  //-
-	 }
-	}
-}
+//static void touch_callback(sl_sleeptimer_timer_handle_t *handle, void *data) {
+//	if (mode != 0) {
+//	CAPSENSE_Sense();
+//	    	      if ( CAPSENSE_getPressed(BUTTON1_CHANNEL)
+//	    	           && !CAPSENSE_getPressed(BUTTON0_CHANNEL)) {
+//	    	    	  offsetInSeconds += adjustOffset(display_cnt + offsetInSeconds, selectedType, INCR);
+//	    	          //+
+//	    	      } else if ( CAPSENSE_getPressed(BUTTON0_CHANNEL)
+//	    	                  && !CAPSENSE_getPressed(BUTTON1_CHANNEL)) {
+//	    	    	  offsetInSeconds += adjustOffset(display_cnt + offsetInSeconds, selectedType, DECR);
+//	    	    	  //-
+//	 }
+//	}
+//}
 
 /***************************************************************************//**
  * @brief   Register a callback function at the given frequency.

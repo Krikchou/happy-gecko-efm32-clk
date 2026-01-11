@@ -191,6 +191,60 @@ void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t sec, bool lowBat)
   DMD_updateDisplay();
 }
 
+void GRAPHICS_DrawMenu(int32_t selectedPage, bool lowBat) {
+	GLIB_clear(&glibContext);
+
+	  if (lowBat) {
+	    GLIB_drawString(&glibContext, "LOW BATTERY!", 12, 5, 120, 0);
+	  } else {
+		  char str[50];
+
+		  GLIB_setFont(&glibContext, (GLIB_Font_t *)&GLIB_font7Segment);
+
+		  if (selectedPage == 0) {
+			  snprintf(str, 50, ">Clock");
+			  GLIB_drawString(&glibContext, str, 25, 5, 25, 0);
+		  } else {
+		      snprintf(str, 50, "Clock");
+		      GLIB_drawString(&glibContext, str, 25, 5, 25, 0);
+		  }
+
+		  if (selectedPage == 1) {
+			  snprintf(str, 50, ">Weather");
+			  GLIB_drawString(&glibContext, str, 25, 5, 50, 0);
+		  } else {
+		      snprintf(str, 50, "Weather");
+		      GLIB_drawString(&glibContext, str, 25, 5, 50, 0);
+		  }
+
+		  if (selectedPage == 2) {
+			  snprintf(str, 50, ">Clk Conf");
+			  GLIB_drawString(&glibContext, str, 25, 5, 75, 0);
+		  } else {
+		      snprintf(str, 50, "Clk Conf");
+		      GLIB_drawString(&glibContext, str, 25, 5, 75, 0);
+		  }
+
+		  if (selectedPage == 3) {
+			  snprintf(str, 50, ">Wth Conf");
+			  GLIB_drawString(&glibContext, str, 25, 5, 90, 0);
+		  } else {
+		      snprintf(str, 50, "Wth Conf");
+		      GLIB_drawString(&glibContext, str, 25, 5, 90, 0);
+		  }
+
+		  if (selectedPage == -1) {
+			  snprintf(str, 50, ">Exit");
+			  GLIB_drawString(&glibContext, str, 25, 5, 115, 0);
+		  } else {
+		      snprintf(str, 50, "Exit");
+		      GLIB_drawString(&glibContext, str, 25, 5, 115, 0);
+		  }
+	  }
+
+	  DMD_updateDisplay();
+}
+
 /***************************************************************************//**
  * @brief Helper function for drawing the temperature in Fahrenheit
  * @param xoffset

@@ -33,6 +33,7 @@ extern "C" {
 void GRAPHICS_Init(void);
 void GRAPHICS_ShowStatus(bool si7013_status, bool lowBat);
 void GRAPHICS_Draw_Weather_Station(int32_t tempData, int32_t rhData, bool lowBat, int32_t temp_min_mC, int32_t temp_max_mC, int32_t humidity_min, int32_t humidity_max);
+void GRAPHICS_DrawMenu(int32_t selectedPage, bool lowBat);
 
 #ifdef __cplusplus
 }
