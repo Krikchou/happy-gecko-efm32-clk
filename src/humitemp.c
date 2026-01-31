@@ -91,9 +91,17 @@ static volatile int32_t rh;
 static volatile int32_t page_state = 0;
 static volatile int32_t prev_page_state = 0;
 static volatile int32_t menu_selected = 0;
-static volatile uint8_t auto_snoze_min = 1;
-static volatile uint32_t next_alarm;
+
+// alarm config
+static volatile uint8_t auto_snooze_min = 1;
+static volatile Alarm alarm;
+static volatile bool alarm_set;
 static volatile bool ring;
+static volatile AlarmType type_selected;
+static volatile uint8_t hour_set = 0;
+static volatile uint8_t min_set = 0;
+static volatile uint8_t sec_set = 0;
+static volatile Day repeat_on_set;
 
 static volatile int btn0_state = 0;
 static volatile int btn1_state = 0;

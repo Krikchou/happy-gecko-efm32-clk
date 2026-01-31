@@ -32,8 +32,8 @@ static GLIB_Context_t glibContext; /* Global glib context */
 static const char month[12][4] = { "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
 		"JUL", "AUG", "SEP", "OCT", "NOV", "DEC" };
 
-static const char day[7][4] =
-		{ "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN" };
+static const char days[9][4] = { "MON", "TUE", "WED", "THU", "FRI", "SAT",
+		"SUN", "WKD", "WND" };
 
 static const int8_t MAX_ITEMS_IN_MENU = 5;
 
@@ -278,6 +278,54 @@ bool blink, bool lowBat) {
 	}
 
 	DMD_updateDisplay();
+}
+
+void GRAPHICS_DrawAlarmSet(uint32_t alarmTime, AlarmType type, Day day,
+		int8_t sel, bool blink, bool lowBat) {
+	GLIB_clear(&glibContext);
+
+	if (lowBat) {
+		GLIB_drawString(&glibContext, "LOW BATTERY!", 12, 5, 120, 0);
+	} else {
+		char str[50];
+
+		GLIB_setFont(&glibContext, (GLIB_Font_t *) &GLIB_font7Segment);
+
+		Time t = GetCurrTime(alarmTime);
+		if (sel != 0 || (sel == 0 && blink)) {
+			if (type == SIMPLE) {
+				snprintf(str, 50, "SIMPLE");
+				GLIB_drawString(&glibContext, str, 36, 5, 25, sel == 0);
+			} else {
+				if (type == REPEATABLE) {
+					snprintf(str, 50, "REPEAT");
+					GLIB_drawString(&glibContext, str, 36, 5, 25, sel == 0);
+				}
+			}
+		}
+
+		if (sel != 1 || (sel == 1 && blink)) {
+			snprintf(str, 50, "%d%d:", t.tm_hour / 10, t.tm_hour % 10);
+			GLIB_drawString(&glibContext, str, 36, 5, 25, sel == 0);
+		}
+		if (sel != 2 || (sel == 2 && blink)) {
+			snprintf(str, 50, "%d%d:", t.tm_min / 10, t.tm_min % 10);
+			GLIB_drawString(&glibContext, str, 36, 41, 25, sel == 1);
+		}
+		if (sel != 3 || (sel == 3 && blink)) {
+			snprintf(str, 50, "%d%d", t.tm_sec / 10, t.tm_sec % 10);
+			GLIB_drawString(&glibContext, str, 24, 77, 25, sel == 2);
+		}
+		if ((sel != 4 || (sel == 4 && blink)) && type == REPEATABLE) {
+			snprintf(str, 50, "RPT: %s", days[day]);
+			GLIB_drawString(&glibContext, str, 50, 5, 50, sel == 3);
+		}
+
+		if (sel != 5 || (sel == 5 && blink)) {
+			snprintf(str, 50, "CONFIRM");
+			GLIB_drawString(&glibContext, str, 25, 5, 75, sel == 6);
+		}
+	}
 }
 
 void GRAPHICS_DrawMenu(int32_t selectedPage, bool lowBat) {
