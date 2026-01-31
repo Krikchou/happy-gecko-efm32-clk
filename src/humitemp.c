@@ -82,10 +82,10 @@ sl_sleeptimer_timer_handle_t clk_timer;
 sl_sleeptimer_timer_handle_t display_timer;
 
 // Baseline epoch
+static int blink_freq = 2;
 static volatile uint32_t cnt;
 static volatile int32_t offsetInSeconds;
-static volatile uint32_t mode;
-static volatile uint32_t display_cnt;
+static volatile int32_t offsetInSecondsPrev;
 static volatile TimeType selectedType;
 static volatile int32_t temp;
 static volatile int32_t rh;
@@ -101,6 +101,7 @@ static volatile int btn1_state = 0;
 // 4 - month
 // 5 - year
 // 6 - exit%apply
+// 7 - cancel
 static volatile int32_t date_adjust_state = 0;
 static volatile uint32_t stopped_at_time;
 
@@ -205,6 +206,14 @@ int main(void)
     		} else {
     			menu_selected = menu_selected + 1;
     		}
+    	} else {
+    		if (page_state == 2) {
+    			if (date_adjust_state == 5) {
+    				offsetInSeconds += adjustOffset(stopped_at_time + offsetInSeconds, YEAR, INCR);
+    			} else {
+    				date_adjust_state = (date_adjust_state + 1)%8;
+    			}
+    		}
     	}
     }
 
@@ -218,7 +227,9 @@ int main(void)
     			prev_page_state = 4;
     		    page_state = menu_selected;
     		    if (page_state == 2) {
+    		    	prev_page_state = 0;
     		    	stopped_at_time = cnt;
+    		    	offsetInSecondsPrev = offsetInSeconds;
     		    }
     		  }
     	   } else {
@@ -228,15 +239,21 @@ int main(void)
     	          page_state = 4;
     		   } else {
     			   if (page_state == 2) {
-    				   if (date_adjust_state != 5 && date_adjust_state != 6) {
-                              offsetInSeconds = adjustOffset(stopped_at_time, date_adjust_state, INCR);
+    				   if (date_adjust_state != 5 && date_adjust_state != 6 && date_adjust_state != 7) {
+                              offsetInSeconds += adjustOffset(stopped_at_time + offsetInSeconds, date_adjust_state, INCR);
     				   } else {
     					   if (date_adjust_state == 5) {
-    						   offsetInSeconds = adjustOffset(stopped_at_time, YEAR, DECR);
+    						   offsetInSeconds += adjustOffset(stopped_at_time + offsetInSeconds, YEAR, DECR);
     					   } else {
     						   if (date_adjust_state == 6) {
     							   cnt = stopped_at_time;
     							   page_state = 4;
+    						   } else {
+    							   if (date_adjust_state == 7) {
+    								   cnt = stopped_at_time;
+    								   offsetInSeconds = offsetInSecondsPrev;
+    								   page_state = 4;
+    							   }
     						   }
     					   }
     				   }
@@ -245,7 +262,15 @@ int main(void)
     	  }
        }
 
-       if (((btn0_state == 1) && (btn1_state == 1)) || ((btn0_state == 0) && (btn1_state == 0))) {
+       if ((btn0_state == 0) && (btn1_state == 0)) {
+    	   if (page_state == 2 && date_adjust_state == 5) {
+    		   date_adjust_state ++;
+    	   } else {
+    	       redraw = true;
+    	   }
+       }
+
+       if (((btn0_state == 1) && (btn1_state == 1))) {
     	   redraw = true;
        }
 
@@ -265,14 +290,8 @@ int main(void)
 		//GRAPHICS_Draw_Weather_Station(tempData, rhData, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
 	}
        if (page_state == 0){
-    		  if (mode == 0) {
-    			  clear_display();
-    			  GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
-    		  } else {
-    			  clear_display();
-    			  GRAPHICS_Draw(temp, rh, display_cnt + offsetInSeconds, lowBat);
-    		  }
-
+    		  clear_display();
+    		  GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
     		  redraw = false;
     	} else {
     		if (page_state == 1) {
@@ -285,11 +304,12 @@ int main(void)
         	    redraw = false;
            } else {
         	 if (page_state == 2) {
-
+        		 clear_display();
+        		 GRPAHICS_DrawTimeAdj(date_adjust_state, stopped_at_time, offsetInSeconds, cnt % blink_freq == 0, lowBat);
+        		 redraw=false;
         	 } else {
         	   if (page_state == 3) {
-        		 clear_display();
-        		 //GRAPHICS_DrawTempAdj();
+
         	   } else {
         	     if (page_state == 4) {
     	           clear_display();

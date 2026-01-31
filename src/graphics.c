@@ -29,6 +29,31 @@
 
 static GLIB_Context_t glibContext;          /* Global glib context */
 
+static const char month[12][4] = {
+		"JAN",
+		"FEB",
+		"MAR",
+		"APR",
+		"MAY",
+		"JUN",
+		"JUL",
+		"AUG",
+		"SEP",
+		"OCT",
+		"NOV",
+		"DEC"
+};
+
+static const char day[7][4] = {
+		"MON",
+		"TUE",
+		"WED",
+		"THU",
+		"FRI",
+		"SAT",
+		"SUN"
+};
+
 static const uint8_t bitmap_drop[] = {0x00,
 		0x00,
 		0x1F,
@@ -189,6 +214,55 @@ void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t sec, bool lowBat)
 	  GLIB_drawString(&glibContext, str, 25, 30, 95, 0);
   }
   DMD_updateDisplay();
+}
+
+void GRPAHICS_DrawTimeAdj(int32_t pos_h, uint32_t time, int32_t offset, bool blink, bool lowBat) {
+	GLIB_clear(&glibContext);
+
+	  if (lowBat) {
+	    GLIB_drawString(&glibContext, "LOW BATTERY!", 12, 5, 120, 0);
+	  } else {
+		  char str[50];
+
+		  GLIB_setFont(&glibContext, (GLIB_Font_t *)&GLIB_font7Segment);
+
+		  Time t = GetCurrTime(time + offset);
+
+		  if (pos_h != 0 || (pos_h == 0 && blink)) {
+		     snprintf(str, 50, "%d%d:", t.tm_hour/10, t.tm_hour%10);
+		     GLIB_drawString(&glibContext, str, 36, 5, 5, pos_h == 0);
+		  }
+		  if (pos_h != 1 || (pos_h == 1 && blink)) {
+		     snprintf(str, 50, "%d%d:", t.tm_min/10, t.tm_min%10);
+		     GLIB_drawString(&glibContext, str, 36, 41, 5, pos_h == 1);
+		  }
+		  if (pos_h != 2 || (pos_h == 2 && blink)) {
+		     snprintf(str, 50, "%d%d", t.tm_sec/10, t.tm_sec%10);
+		     GLIB_drawString(&glibContext, str, 24, 77, 5, pos_h == 2);
+		  }
+		  if (pos_h != 3 || (pos_h == 3 && blink)) {
+		     snprintf(str, 50, "%d%d/", t.tm_mday/10, t.tm_mday%10);
+		     GLIB_drawString(&glibContext, str, 36, 5, 25, pos_h == 3);
+		  }
+		  if (pos_h != 4 || (pos_h == 4 && blink)) {
+		     snprintf(str, 50, "%s", month[t.tm_mon - 1]);
+		     GLIB_drawString(&glibContext, str, 48, 41, 25, pos_h == 4);
+		  }
+		  if (pos_h != 5 || (pos_h == 5 && blink)) {
+		     snprintf(str, 50, "%d", t.tm_year);
+		     GLIB_drawString(&glibContext, str, 38, 5, 50, pos_h == 5);
+		  }
+		  if (pos_h != 6 || (pos_h == 6 && blink)) {
+	         snprintf(str, 50, "CONFIRM");
+	         GLIB_drawString(&glibContext, str, 25, 5, 75, pos_h == 6);
+		  }
+	      if (pos_h != 7 || (pos_h == 7 && blink)) {
+	         snprintf(str, 50, "CANCEL");
+	         GLIB_drawString(&glibContext, str, 25, 5, 100, pos_h == 7);
+	      }
+	  }
+
+	  DMD_updateDisplay();
 }
 
 void GRAPHICS_DrawMenu(int32_t selectedPage, bool lowBat) {

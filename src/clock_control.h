@@ -35,6 +35,7 @@ typedef struct Time {
 
 void RTC_Setup(void);
 Time GetCurrTime(uint32_t sec);
+// with looping
 int32_t adjustOffset(uint32_t time, TimeType timeType, OperationType operation);
 
 #endif /* SRC_CLOCK_CONTROL_H_ */
