@@ -8,6 +8,18 @@
 #ifndef CLOCK_CONTROL_H
 #define CLOCK_CONTROL_H
 
+typedef enum Day {
+	MON,
+	TUE,
+	WED,
+	THU,
+	FRI,
+	SAT,
+	SUN,
+	WEEKDAY,
+	WEEKEND
+} Day;
+
 typedef enum TimeType {
 	HOUR,
 	MINUTE,
@@ -16,6 +28,11 @@ typedef enum TimeType {
 	MONTH,
 	YEAR
 } TimeType;
+
+typedef enum AlarmType {
+	SIMPLE,
+	REPEATABLE,
+} AlarmType;
 
 typedef enum OperationType {
 	INCR,
@@ -32,6 +49,11 @@ typedef struct Time {
 	int32_t tm_year;
 	int32_t tm_wday;
 } Time;
+
+typedef struct Alarm {
+	AlarmType type;
+	uint32_t time_of;
+} Alarm;
 
 void RTC_Setup(void);
 Time GetCurrTime(uint32_t sec);
