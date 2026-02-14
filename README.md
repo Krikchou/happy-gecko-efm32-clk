@@ -175,6 +175,7 @@ This project is open source. Please check with the repository owner for specific
 
 **Krikchou**
 - GitHub: [@Krikchou](https://github.com/Krikchou)
+**аdrianп59**
 - GitHub: [@adrianp59](https://github.com/adrianp59)
 ---
 
