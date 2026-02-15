@@ -177,6 +177,8 @@ This project is open source. Please check with the repository owner for specific
 - GitHub: [@Krikchou](https://github.com/Krikchou)
 **аdrianп59**
 - GitHub: [@adrianp59](https://github.com/adrianp59)
+**mladendzhu-joe**
+- GitHub: [@mladendzhu-joe](https://github.com/mladendzhu-joe)
 ---
 
 *This project demonstrates embedded C programming, microcontroller peripheral control, sensor integration, and user interface design on resource-constrained hardware.*
