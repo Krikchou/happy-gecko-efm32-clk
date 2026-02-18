@@ -34,7 +34,6 @@ extern "C" {
  ******************************************************************************/
 void GRAPHICS_Init(void);
 void GRAPHICS_ShowStatus(bool si7013_status, bool lowBat);
-void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t cnt, bool lowBat);
 
 #ifdef __cplusplus
 }

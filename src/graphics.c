@@ -183,7 +183,8 @@ void GRAPHICS_ShowStatus(bool si7013_status, bool lowBat) {
  * @param degF
  *        Set to 0 to display temperature in Celsius, otherwise Fahrenheit.
  ******************************************************************************/
-void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t sec, bool lowBat) {
+void GRAPHICS_Draw_Clock(int32_t tempData, uint32_t rhData, uint32_t sec, bool alarm,
+		bool ring, bool lowBat) {
 	GLIB_clear(&glibContext);
 
 	if (lowBat) {
@@ -198,18 +199,31 @@ void GRAPHICS_Draw(int32_t tempData, uint32_t rhData, uint32_t sec, bool lowBat)
 		Time t;
 		t = GetCurrTime(sec);
 
-		GLIB_drawBitmap(&glibContext, 5, 5, 32, 32, bitmap_bell_static_32);
-		GLIB_drawBitmap(&glibContext, 38, 5, 32, 32, bitmap_bell_x_32);
+		if (!alarm && !ring) {
+			GLIB_drawBitmap(&glibContext, 5, 5, 32, 32, bitmap_bell_x_32);
+		} else {
+			if (alarm && !ring) {
+				GLIB_drawBitmap(&glibContext, 5, 5, 32, 32,
+						bitmap_bell_static_32);
+			} else {
+				if (ring) {
 
-		if (sec % 3 == 0) {
-			GLIB_drawBitmap(&glibContext, 72, 5, 32, 32, bitmap_bell_static_32);
+					if (sec % 3 == 0) {
+						GLIB_drawBitmap(&glibContext, 5, 5, 32, 32,
+								bitmap_bell_static_32);
+					}
+					if (sec % 3 == 1) {
+						GLIB_drawBitmap(&glibContext, 5, 5, 32, 32,
+								bitmap_bell_ring_f1);
+					}
+					if (sec % 3 == 2) {
+						GLIB_drawBitmap(&glibContext, 5, 5, 32, 32,
+								bitmap_bell_ring_f2);
+					}
+				}
+			}
 		}
-		if (sec % 3 == 1) {
-			GLIB_drawBitmap(&glibContext, 72, 5, 32, 32, bitmap_bell_ring_f1);
-		}
-		if (sec % 3 == 2) {
-			GLIB_drawBitmap(&glibContext, 72, 5, 32, 32, bitmap_bell_ring_f2);
-		}
+
 		GLIB_setFont(&glibContext, (GLIB_Font_t *) &GLIB_font7Segment);
 		snprintf(str, 50, "%d%d:%d%d:%d%d", t.tm_hour / 10, t.tm_hour % 10,
 				t.tm_min / 10, t.tm_min % 10, t.tm_sec / 10, t.tm_sec % 10);
@@ -295,11 +309,11 @@ void GRAPHICS_DrawAlarmSet(uint32_t alarmTime, AlarmType type, Day day,
 		if (sel != 0 || (sel == 0 && blink)) {
 			if (type == SIMPLE) {
 				snprintf(str, 50, "SIMPLE");
-				GLIB_drawString(&glibContext, str, 36, 5, 25, sel == 0);
+				GLIB_drawString(&glibContext, str, 36, 5, 0, sel == 0);
 			} else {
 				if (type == REPEATABLE) {
 					snprintf(str, 50, "REPEAT");
-					GLIB_drawString(&glibContext, str, 36, 5, 25, sel == 0);
+					GLIB_drawString(&glibContext, str, 36, 5, 0, sel == 0);
 				}
 			}
 		}
@@ -326,6 +340,8 @@ void GRAPHICS_DrawAlarmSet(uint32_t alarmTime, AlarmType type, Day day,
 			GLIB_drawString(&glibContext, str, 25, 5, 75, sel == 6);
 		}
 	}
+
+	DMD_updateDisplay();
 }
 
 void GRAPHICS_DrawMenu(int32_t selectedPage, bool lowBat) {

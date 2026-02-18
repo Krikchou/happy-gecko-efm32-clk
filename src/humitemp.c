@@ -93,15 +93,15 @@ static volatile int32_t prev_page_state = 0;
 static volatile int32_t menu_selected = 0;
 
 // alarm config
-static volatile uint8_t auto_snooze_min = 1;
 static volatile Alarm alarm;
-static volatile bool alarm_set;
-static volatile bool ring;
-static volatile AlarmType type_selected;
+static volatile bool alarm_set = false;
+static volatile bool ring = false;
+static volatile AlarmType type_selected = SIMPLE;
 static volatile uint8_t hour_set = 0;
 static volatile uint8_t min_set = 0;
 static volatile uint8_t sec_set = 0;
-static volatile Day repeat_on_set;
+static volatile Day repeat_on_set = MON;
+static volatile int8_t alarm_adj_state = 0;
 
 static volatile int btn0_state = 0;
 static volatile int btn1_state = 0;
@@ -208,12 +208,46 @@ int main(void) {
 	GPIO_PinModeSet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN, gpioModeInputPull, 1);
 
 	while (true) {
+
+		if (alarm_set) {
+			Time a_time = GetCurrTime(alarm.time_of);
+			Time t_time = GetCurrTime(cnt);
+
+			ring =
+					a_time.tm_hour == t_time.tm_hour
+							&& a_time.tm_min == t_time.tm_min
+							&& a_time.tm_sec == t_time.tm_sec
+							&& ((alarm.type == REPEATABLE
+									&& ((alarm.day_repeat == WEEKDAY
+											&& t_time.tm_wday >= 0
+											&& t_time.tm_wday < 5)
+											|| (alarm.day_repeat == WEEKEND
+													&& (t_time.tm_wday == 5
+															|| t_time.tm_wday
+																	== 6))
+											|| t_time.tm_wday
+													== alarm.day_repeat))
+									|| alarm.type == SIMPLE);
+
+			if (alarm.type == SIMPLE && ring) {
+				alarm_set = false;
+			}
+		}
+
+		if (ring) {
+			ring = cnt % 60 - alarm.time_of % 60 <= 59;
+		}
+
 		// Status of PB0 and PB1
 		btn0_state = GPIO_PinInGet(BSP_GPIO_PB0_PORT, BSP_GPIO_PB0_PIN);
 		btn1_state = GPIO_PinInGet(BSP_GPIO_PB1_PORT, BSP_GPIO_PB1_PIN);
 
 		// Determine mode of operation
 		if ((btn0_state == 0) && (btn1_state == 1)) {
+			if (ring) {
+				ring = false;
+			}
+
 			if (page_state == 6) {
 				if (menu_selected == 5) {
 					menu_selected = 0;
@@ -228,11 +262,22 @@ int main(void) {
 					} else {
 						date_adjust_state = (date_adjust_state + 1) % 8;
 					}
+				} else {
+					if (page_state == 4) {
+						alarm_adj_state = (alarm_adj_state + 1) % 6;
+						if (type_selected != REPEATABLE
+								&& alarm_adj_state == 4) {
+							alarm_adj_state = 5;
+						}
+					}
 				}
 			}
 		}
 
 		if ((btn0_state == 1) && (btn1_state == 0)) {
+			if (ring) {
+				ring = false;
+			}
 			if (page_state == 6) {
 				if (menu_selected == 5) {
 					page_state = prev_page_state;
@@ -245,6 +290,15 @@ int main(void) {
 						prev_page_state = 0;
 						stopped_at_time = cnt;
 						offsetInSecondsPrev = offsetInSeconds;
+					} else {
+						if (page_state == 4) {
+							Time t = GetCurrTime(cnt);
+							hour_set = t.tm_hour;
+							min_set = t.tm_min;
+							sec_set = t.tm_sec;
+							type_selected = SIMPLE;
+							repeat_on_set = t.tm_wday + 1;
+						}
 					}
 				}
 			} else {
@@ -277,12 +331,62 @@ int main(void) {
 								}
 							}
 						}
+					} else {
+						// yandere dev type of code
+						if (page_state == 4) {
+							if (alarm_adj_state == 0) {
+								type_selected = (type_selected + 1) % 2;
+							} else {
+								if (alarm_adj_state == 1) {
+									hour_set += 1;
+								} else {
+									if (alarm_adj_state == 2) {
+										min_set += 1;
+									} else {
+										if (alarm_adj_state == 3) {
+											sec_set += 1;
+										} else {
+											if (alarm_adj_state == 4) {
+												repeat_on_set = (repeat_on_set
+														+ 1) % 9;
+											} else {
+												if (alarm_adj_state == 5) {
+													page_state = 0;
+													alarm_set = true;
+													alarm =
+															(Alarm ) {
+																			type_selected,
+																			repeat_on_set,
+																			hour_set
+																					* 3600
+																					+ min_set
+																							* 60
+																					+ sec_set };
+												}
+											}
+										}
+									}
+								}
+							}
+
+							if (hour_set * 3600 + min_set * 60 + sec_set
+									>= 24 * 3600) {
+								uint32_t temp = (hour_set * 3600 + min_set * 60
+										+ sec_set) - 24 * 3600;
+								hour_set = temp / 3600;
+								min_set = (temp % 3600) / 60;
+								sec_set = temp % 60;
+							}
+						}
 					}
 				}
 			}
 		}
 
 		if ((btn0_state == 0) && (btn1_state == 0)) {
+			if (ring) {
+				ring = false;
+			}
 			if (page_state == 2 && date_adjust_state == 5) {
 				date_adjust_state++;
 			} else {
@@ -316,7 +420,8 @@ int main(void) {
 		}
 		if (page_state == 0) {
 			clear_display();
-			GRAPHICS_Draw(temp, rh, cnt + offsetInSeconds, lowBat);
+			GRAPHICS_Draw_Clock(temp, rh, cnt + offsetInSeconds, alarm_set,
+					ring, lowBat);
 			redraw = false;
 		} else {
 			if (page_state == 1) {
@@ -339,7 +444,12 @@ int main(void) {
 
 					} else {
 						if (page_state == 4) {
-
+							clear_display();
+							GRAPHICS_DrawAlarmSet(
+									hour_set * 60 * 60 + min_set * 60 + sec_set,
+									type_selected, repeat_on_set,
+									alarm_adj_state, cnt % blink_freq == 0,
+									lowBat);
 						} else {
 							if (page_state == 6) {
 								clear_display();

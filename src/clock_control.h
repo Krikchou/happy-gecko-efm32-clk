@@ -52,6 +52,8 @@ typedef struct Time {
 
 typedef struct Alarm {
 	AlarmType type;
+	Day day_repeat;
+	//represents max of 24 hours
 	uint32_t time_of;
 } Alarm;
 

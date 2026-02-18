@@ -31,6 +31,8 @@ extern "C" {
  *****************************   PROTOTYPES   **********************************
  ******************************************************************************/
 void GRAPHICS_Init(void);
+void GRAPHICS_Draw_Clock(int32_t tempData, uint32_t rhData, uint32_t sec, bool alarm,
+		bool ring, bool lowBat);
 void GRAPHICS_ShowStatus(bool si7013_status, bool lowBat);
 void GRAPHICS_Draw_Weather_Station(int32_t tempData, int32_t rhData,
 		bool lowBat, int32_t temp_min_mC, int32_t temp_max_mC,
