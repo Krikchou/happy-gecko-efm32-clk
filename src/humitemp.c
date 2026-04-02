@@ -133,7 +133,7 @@ void clear_display(void);
 void GRAPHICS_Draw(int32_t temp, uint32_t rh, uint32_t time, bool lowBat);
 void GRAPHICS_Draw_Weather_Station(int32_t tempData, uint32_t rhData,
 bool lowBat, int32_t temp_min_mC, int32_t temp_max_mC, uint32_t humidity_min,
-		uint32_t humidity_max);
+		uint32_t humidity_max, bool weather_reset);
 void resetTempHumidity(void);
 int32_t temp_min_mC = INT32_MAX; // min will always be the biggest 32bit value, so any real measured temp will be lower and replace it
 int32_t temp_max_mC = INT32_MIN; // max will always be the smallest 32bit value, so any real measured temp will be bigger and replace it
@@ -310,7 +310,7 @@ int main(void) {
 					}
 				}
 			} else {
-				if (page_state == 0 || (page_state == 1 && !weather_reset)) {
+				if (page_state == 0) {
 					prev_page_state = page_state;
 					menu_selected = page_state;
 					page_state = 6;
@@ -390,6 +390,10 @@ int main(void) {
 								if (weather_reset) {
 									weather_reset = !weather_reset;
 									resetMinMacHumidity();
+								} else {
+									prev_page_state = page_state;
+									menu_selected = page_state;
+									page_state = 6;
 								}
 							}
 						}
@@ -447,7 +451,7 @@ int main(void) {
 				//} else {
 				clear_display();
 				GRAPHICS_Draw_Weather_Station(tempData, rhData, lowBat,
-						temp_min_mC, temp_max_mC, humidity_min, humidity_max);
+						temp_min_mC, temp_max_mC, humidity_min, humidity_max, weather_reset);
 				//}
 				redraw = false;
 			} else {

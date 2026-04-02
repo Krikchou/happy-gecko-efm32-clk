@@ -649,7 +649,7 @@ void GLIB_drawStringCentered(GLIB_Context_t *pContext, const char *s,
 
 void GRAPHICS_Draw_Weather_Station(int32_t tempData, int32_t rhData,
 bool lowBat, int32_t temp_min_mC, int32_t temp_max_mC, int32_t humidity_min,
-		int32_t humidity_max) {
+		int32_t humidity_max, bool weather_reset) {
 	GLIB_clear(&glibContext);
 
 	if (lowBat) {
@@ -662,6 +662,9 @@ bool lowBat, int32_t temp_min_mC, int32_t temp_max_mC, int32_t humidity_min,
 				temp_min_mC, temp_max_mC);
 		GRAPHICS_DrawHumidity_Weather_Station(127 - 40, 3, rhData, humidity_min,
 				humidity_max);
+		if(weather_reset) {
+		   GLIB_drawString(&glibContext, "SET", 3, 67, 120, 0);
+		}
 	}
 	DMD_updateDisplay();
 }
