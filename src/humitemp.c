@@ -96,6 +96,7 @@ static volatile int32_t menu_selected = 0;
 static volatile Alarm alarm;
 static volatile bool alarm_set = false;
 static volatile bool ring = false;
+static volatile bool weather_reset = false;
 static volatile AlarmType type_selected = SIMPLE;
 static volatile uint8_t hour_set = 0;
 static volatile uint8_t min_set = 0;
@@ -269,6 +270,13 @@ int main(void) {
 								&& alarm_adj_state == 4) {
 							alarm_adj_state = 5;
 						}
+					} else {
+						if (page_state == 1) {
+							if (weather_reset) {
+								weather_reset = !weather_reset;
+								resetMinMaxTemp();
+							}
+						}
 					}
 				}
 			}
@@ -302,7 +310,7 @@ int main(void) {
 					}
 				}
 			} else {
-				if (page_state == 0 || page_state == 1) {
+				if (page_state == 0 || (page_state == 1 && !weather_reset)) {
 					prev_page_state = page_state;
 					menu_selected = page_state;
 					page_state = 6;
@@ -377,6 +385,13 @@ int main(void) {
 								min_set = (temp % 3600) / 60;
 								sec_set = temp % 60;
 							}
+						} else {
+							if (page_state == 1) {
+								if (weather_reset) {
+									weather_reset = !weather_reset;
+									resetMinMacHumidity();
+								}
+							}
 						}
 					}
 				}
@@ -390,7 +405,11 @@ int main(void) {
 			if (page_state == 2 && date_adjust_state == 5) {
 				date_adjust_state++;
 			} else {
-				redraw = true;
+				if (page_state == 1) {
+					weather_reset = !weather_reset;
+				} else {
+					redraw = true;
+				}
 			}
 		}
 
@@ -409,14 +428,12 @@ int main(void) {
 				humidity_min = rhData;
 			if (rhData > humidity_max)
 				humidity_max = rhData;
-//		measurement_flag = false;
 			if (lowBatPrevious) {
 				lowBat = (vBat <= LOW_BATTERY_THRESHOLD);
 			} else {
 				lowBat = false;
 			}
 			lowBatPrevious = (vBat <= LOW_BATTERY_THRESHOLD);
-			//GRAPHICS_Draw_Weather_Station(tempData, rhData, lowBat, temp_min_mC, temp_max_mC, humidity_min, humidity_max);
 		}
 		if (page_state == 0) {
 			clear_display();
@@ -461,18 +478,6 @@ int main(void) {
 				}
 			}
 		}
-
-//    if (measurement_flag) {
-//      measure_humidity_and_temperature(i2cInit.port, &rh, &temp, &vBat);
-//      measurement_flag = false;
-//      if (lowBatPrevious) {
-//        lowBat = (vBat <= LOW_BATTERY_THRESHOLD);
-//      } else {
-//        lowBat = false;
-//      }
-//      lowBatPrevious = (vBat <= LOW_BATTERY_THRESHOLD);
-//    }
-
 	}
 	EMU_EnterEM2(false);
 }
